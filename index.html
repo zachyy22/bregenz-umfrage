@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Bregenz Boyz Trip</title>
+<meta name="description" content="Abstimmung: Wann geht's ins Casino Bregenz?">
+<meta property="og:title" content="🎰 Bregenz Boyz Trip – stimm ab!">
+<meta property="og:description" content="Wähl deinen Namen und kreuz an, welche Wochenenden im Jan/Feb du kannst.">
+<meta name="theme-color" content="#07060e">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%B0%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=DM+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="aurora" aria-hidden="true"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div></div>
+<div class="grain" aria-hidden="true"></div>
+<canvas id="sparks" aria-hidden="true"></canvas>
+<div class="spot" aria-hidden="true"></div>
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<main class="wrap">
+  <div class="top">
+    <div class="brand"><div class="chip-dot"></div>Casino Bregenz · Boyz Trip</div>
+    <div class="steps" id="steps" aria-hidden="true"><span></span><span></span><span></span></div>
+  </div>
+  <section class="card" id="stage" aria-live="polite"></section>
+  <div class="foot"><span id="dbstate">Verbinde …</span><span>Ab ins Casino 🎲</span></div>
+</main>
+
+<script src="common.js"></script>
+<script>
+let state = { step:0, name:null, picks:new Set(), none:false };
+let votes = {};
+let lastSave = "pending";
+const stage = document.getElementById("stage");
+
+function render(){
+  const v=stage.querySelector(".view");
+  if(v && !render.busy){ render.busy=true; v.classList.add("out"); setTimeout(()=>{ render.busy=false; _render(); },230); return; }
+  _render();
+}
+function _render(){
+  setSteps(state.step);
+  [renderIntro, renderNames, renderDates, renderDone][state.step]();
+}
+
+function renderIntro(){
+  const n = Object.keys(votes).length;
+  stage.innerHTML = `<div class="view">
+    <div class="eyebrow">Geburtstags-Überraschung · Abstimmung</div>
+    ${slotHTML()}
+    <h1><span class="reveal"><span style="--d:.1"><span class="shine">Rien ne va plus</span></span></span><span class="reveal"><span style="--d:.28">in Bregenz.</span></span></h1>
+    <p class="lead">Wir schenken Justin einen Boyz Trip ins Casino Bregenz. Wähl deinen Namen und kreuz alle Wochenenden im Januar und Februar an, an denen du kannst.</p>
+    <div class="facts">
+      <div class="fact"><small>Zeitraum</small><b>Jan – Feb</b></div>
+      <div class="fact"><small>Optionen</small><b>${DATES.length} WE</b></div>
+      <div class="fact"><small>Abgestimmt</small><b>${n} / ${NAMES.length}</b></div>
+    </div>
+    <div class="row"><button class="btn" id="go">Los geht's <span aria-hidden="true">→</span></button></div>
+  </div>`;
+  document.getElementById("go").onclick = ()=>{ state.step=1; render(); };
+}
+
+function renderNames(){
+  stage.innerHTML = `<div class="view">
+    <div class="eyebrow">Schritt 1 von 2</div>
+    <h2>Wer bist du?</h2>
+    <div class="names">${NAMES.map((n,i)=>`
+      <button class="name ${n===BDAY?"bday":""} ${state.name===n?"sel":""}" data-n="${n}" style="--i:${i};${hue(n)}">
+        ${votes[n]?`<span class="voted">✓ dabei</span>`:""}
+        <div class="avatar">${n[0]}</div>
+        <span>${n}</span>
+        ${n===BDAY?`<div class="tag">Geburtstagskind</div>`:""}
+      </button>`).join("")}
+    </div>
+    <div class="row"><button class="btn ghost small" id="back">← Zurück</button></div>
+  </div>`;
+  stage.querySelectorAll(".name").forEach(b=>b.onclick=()=>{
+    const n=b.dataset.n, v=votes[n];
+    state.name=n; state.picks=new Set(v?v.dates:[]); state.none=!!(v&&v.none);
+    b.classList.add("sel");
+    setTimeout(()=>{ state.step=2; render(); }, 260);
+  });
+  document.getElementById("back").onclick=()=>{state.step=0; render();};
+}
+
+function renderDates(){
+  const months=[...new Set(DATES.map(d=>d.m))], n=state.name;
+  stage.innerHTML = `<div class="view">
+    <div class="who" style="${hue(n)}"><div class="avatar">${n[0]}</div><b>${n}</b>${votes[n]?`<span class="small muted">· deine Auswahl bearbeiten</span>`:""}</div>
+    <div class="eyebrow">Schritt 2 von 2 · Mehrfachauswahl</div>
+    <h2>Welche Wochenenden passen dir?</h2>
+    ${months.map(m=>`
+      <div class="month">${m}</div>
+      <div class="dates">${DATES.filter(d=>d.m===m).map((d,i)=>`
+        <button class="date ${state.picks.has(d.id)?"sel":""}" data-id="${d.id}" style="--i:${i}" aria-pressed="${state.picks.has(d.id)}">
+          <span class="check"><svg viewBox="0 0 16 16"><path d="M3 8.5l3.2 3L13 4.5"/></svg></span>
+          <span class="days">${d.days}</span>
+          <span class="wd">${d.wd} · ${d.m.split(" ")[0]}</span>
+          ${d.hint?`<span class="hint ${d.cls||""}">${d.hint}</span>`:""}
+        </button>`).join("")}
+      </div>`).join("")}
+    <button class="none ${state.none?"sel":""}" id="none">✕ &nbsp;Kein Termin passt mir</button>
+    <div class="row actionbar" style="justify-content:space-between">
+      <button class="btn ghost small" id="back">← Name ändern</button>
+      <div class="row"><span class="counter" id="counter"></span><button class="btn" id="send">Abstimmen</button></div>
+    </div>
+  </div>`;
+  const upd=()=>{ setTimeout(()=>{const cb=document.querySelector("#counter b"); cb&&cb.classList.add("bump")},0);
+    document.getElementById("counter").innerHTML = state.none?"keiner passt":`<b>${state.picks.size}</b> gewählt`;
+    document.getElementById("send").disabled = !(state.picks.size||state.none);
+  };
+  stage.querySelectorAll(".date").forEach(b=>b.onclick=(e)=>{
+    const id=+b.dataset.id, r=b.getBoundingClientRect();
+    b.style.setProperty("--px",(e.clientX-r.left)+"px"); b.style.setProperty("--py",(e.clientY-r.top)+"px");
+    b.classList.add("flash"); setTimeout(()=>b.classList.remove("flash"),40);
+    state.picks.has(id)?state.picks.delete(id):state.picks.add(id);
+    b.classList.toggle("sel"); b.setAttribute("aria-pressed", state.picks.has(id));
+    if(state.picks.size && state.none){ state.none=false; document.getElementById("none").classList.remove("sel"); }
+    upd();
+  });
+  document.getElementById("none").onclick=(e)=>{
+    state.none=!state.none; e.currentTarget.classList.toggle("sel",state.none);
+    if(state.none){ state.picks.clear(); stage.querySelectorAll(".date.sel").forEach(x=>{x.classList.remove("sel");x.setAttribute("aria-pressed","false")}); }
+    upd();
+  };
+  document.getElementById("back").onclick=()=>{state.step=1; render();};
+  document.getElementById("send").onclick=submit;
+  upd();
+}
+
+function voteCode(name, ids, none){
+  const list = none ? "kein Termin" : ids.map(i=>byId[i].short).join(", ");
+  return `🎰 Bregenz-Vote ${name}: ${list}\n#BZ:${name}:${none?"0":ids.join(".")}`;
+}
+
+async function submit(){
+  const ids=[...state.picks].sort((a,b)=>a-b);
+  const rec={name:state.name, dates:ids, none:state.none};
+  votes[state.name]={...rec};
+  lastSave="pending"; state.step=3; render(); burst();
+  if(!WORKER_URL){ lastSave="fail"; renderDone(); return; }
+  try{
+    const r = await fetch(WORKER_URL + "/vote", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(rec)});
+    lastSave = r.ok ? "ok" : "fail";
+  }catch{ lastSave="fail"; }
+  if(state.step===3) renderDone();
+}
+
+function renderDone(){
+  const ids=[...state.picks].sort((a,b)=>a-b);
+  const code=voteCode(state.name, ids, state.none);
+  const msg = lastSave==="ok" ? `<span class="status ok">✓ Gespeichert. Du kannst deine Auswahl jederzeit ändern.</span>`
+    : lastSave==="pending" ? `<span class="status">Speichere …</span>`
+    : `<span class="status warn">Speichern hat nicht geklappt. Kopier deine Antwort und schick sie in den Gruppenchat.</span>`;
+  stage.innerHTML = `<div class="view done">
+    <div class="eyebrow">Faites vos jeux</div>
+    <h2><span class="shine">Danke, ${esc(state.name)}!</span></h2>
+    <p class="lead">${state.none?"Schade, dass kein Termin passt. Wir melden uns.":`Du hast <b>${ids.length}</b> ${ids.length===1?"Wochenende":"Wochenenden"} gewählt: ${ids.map(i=>byId[i].short).join(" · ")}`}</p>
+    ${msg}
+    ${lastSave==="fail"?`<div class="ticket">
+      <div class="eyebrow">Deine Antwort</div>
+      <code id="code">${esc(code)}</code>
+      <div class="row"><button class="btn small" id="copy">Kopieren</button><span class="small muted" id="copied"></span></div>
+    </div>`:""}
+    <div class="row">
+      <button class="btn ghost small" id="edit">Auswahl ändern</button>
+      <button class="btn ghost small" id="restart">Für jemand anderen abstimmen</button>
+    </div>
+  </div>`;
+  const cp=document.getElementById("copy");
+  if(cp) cp.onclick=async()=>{
+    const out=document.getElementById("copied");
+    try{ await navigator.clipboard.writeText(code); out.textContent="Kopiert ✓"; }
+    catch{ const r=document.createRange(); r.selectNodeContents(document.getElementById("code")); const s=getSelection(); s.removeAllRanges(); s.addRange(r); out.textContent="Markiert – jetzt kopieren"; }
+  };
+  document.getElementById("edit").onclick=()=>{state.step=2; render();};
+  document.getElementById("restart").onclick=()=>{state={step:1,name:null,picks:new Set(),none:false}; render();};
+}
+
+render();
+loadVotes().then(({votes:v})=>{
+  votes=v; document.getElementById("dbstate").textContent = WORKER_URL ? "Live verbunden" : "Worker noch nicht eingerichtet";
+  if(state.step===0) renderIntro();
+}).catch(()=>{ document.getElementById("dbstate").textContent="Stimmen konnten nicht geladen werden"; });
+</script>
+</body>
+</html>

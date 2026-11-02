@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Bregenz Auswertung</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#07060e">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%B2%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=DM+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="aurora" aria-hidden="true"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div></div>
+<div class="grain" aria-hidden="true"></div>
+<canvas id="sparks" aria-hidden="true"></canvas>
+<div class="spot" aria-hidden="true"></div>
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<main class="wrap">
+  <div class="top">
+    <div class="brand"><div class="chip-dot"></div>Casino Bregenz · Auswertung</div>
+    <button class="btn ghost small" id="reload">↻ Aktualisieren</button>
+  </div>
+  <section class="card" id="stage" aria-live="polite"><div class="view"><h2>Lade Stimmen …</h2></div></section>
+  <div class="foot"><span id="dbstate"></span><a href="./" style="color:inherit">Zur Umfrage</a></div>
+</main>
+
+<script src="common.js"></script>
+<script>
+let votes = {};
+const stage = document.getElementById("stage");
+
+function renderResults(){
+  const voters=NAMES.filter(n=>votes[n]);
+  const open=NAMES.filter(n=>!votes[n]);
+  const j=votes[BDAY];
+  const rows=DATES.map(d=>{
+    const who=voters.filter(n=>votes[n].dates.includes(d.id));
+    const jYes = j ? j.dates.includes(d.id) : null;
+    return {d, who, jYes, dead: jYes===false};
+  });
+  const alive=rows.filter(r=>!r.dead);
+  const max=Math.max(0,...alive.map(r=>r.who.length));
+  const best = (j && max>0) ? alive.filter(r=>r.who.length===max).map(r=>r.d.id) : [];
+  const sorted=[...rows].sort((a,b)=>(a.dead-b.dead)||(b.who.length-a.who.length)||(a.d.id-b.d.id));
+
+  stage.innerHTML = `<div class="view">
+    <div><div class="eyebrow">Wer kann wann</div><h2>Auswertung</h2></div>
+    <div class="kpis">
+      <div class="kpi"><small>Abgestimmt</small><b>${voters.length}/${NAMES.length}</b></div>
+      <div class="kpi"><small>Justin</small><b style="color:${j?"var(--gold)":"var(--faint)"}">${j?(j.none?"kann nie":j.dates.length+" WE"):"offen"}</b></div>
+      <div class="kpi"><small>Bester Termin</small><b>${best.length?byId[best[0]].short.slice(0,6):"–"}</b></div>
+    </div>
+    ${open.length?`<p class="small muted" style="margin:0">Noch offen: ${open.map(esc).join(", ")}</p>`:`<p class="small" style="margin:0;color:var(--ok)">Alle haben abgestimmt ✓</p>`}
+    ${!j?`<p class="small" style="margin:0;color:var(--gold)">Justin hat noch nicht abgestimmt. Ohne ihn steht noch kein Termin fest.</p>`:""}
+    <div class="rank">${sorted.map((r,i)=>`
+      <div class="r ${r.dead?"dead":""} ${best.includes(r.d.id)?"best":""}" style="--i:${i}">
+        <div class="bar" data-w="${(r.who.length/NAMES.length*100).toFixed(1)}"></div>
+        <div class="num">${r.who.length}<small>/${NAMES.length}</small></div>
+        <div style="min-width:0">
+          <div class="when">${r.d.short} <span class="sub">${r.d.wd}</span>${best.includes(r.d.id)?`<span class="crown">Favorit</span>`:""}</div>
+          ${r.d.hint?`<div class="sub">${r.d.hint}</div>`:""}
+          <div class="faces">${r.who.map(n=>`<span class="face ${n===BDAY?"j":""}" style="${hue(n)}" title="${n}">${n.slice(0,2)}</span>`).join("")}</div>
+        </div>
+        <div class="jcol">${r.jYes===true?`<span class="jstate yes">♛ Justin kann</span>`:r.jYes===false?`<span class="jstate no">✕ Justin kann nicht · fällt weg</span>`:`<span class="jstate open">Justin offen</span>`}</div>
+      </div>`).join("")}
+    </div>
+    <div class="eyebrow">Übersicht</div>
+    <div class="matrix-wrap"><table>
+      <thead><tr><th>Name</th>${DATES.map(d=>`<th>${d.short.replace(/\.$/,"")}</th>`).join("")}</tr></thead>
+      <tbody>${NAMES.map(n=>{
+        const v=votes[n];
+        if(!v) return `<tr class="pending ${n===BDAY?"jrow":""}"><td>${n===BDAY?"♛ ":""}${n}</td><td colspan="${DATES.length}">noch nicht abgestimmt</td></tr>`;
+        return `<tr class="${n===BDAY?"jrow":""}"><td>${n===BDAY?"♛ ":""}${n}</td>${DATES.map(d=>v.dates.includes(d.id)?`<td class="y">✓</td>`:`<td class="n">✕</td>`).join("")}</tr>`;
+      }).join("")}</tbody>
+    </table></div>
+    <details>
+      <summary>Antworten aus dem Chat einlesen</summary>
+      <p class="small muted" style="margin-top:0">Falls jemand nicht speichern konnte und seinen <code>#BZ:</code>-Code in den Chat geschickt hat: Chatverlauf hier reinkopieren. Die Codes werden in dieser Ansicht mitgezählt (nicht gespeichert).</p>
+      <textarea id="imp" placeholder="#BZ:Marlon:2.4.6"></textarea>
+      <div class="row" style="margin-top:10px"><button class="btn small" id="doImp">Einlesen</button><span class="small muted" id="impOut"></span></div>
+    </details>
+  </div>`;
+  requestAnimationFrame(()=>stage.querySelectorAll(".bar").forEach(b=>b.style.width=b.dataset.w+"%"));
+  document.getElementById("doImp").onclick=importCodes;
+}
+
+function importCodes(){
+  const txt=document.getElementById("imp").value;
+  const re=/#BZ:([A-Za-zÄÖÜäöüß]+):([0-9.]*)/g; let m, c=0;
+  while((m=re.exec(txt))){
+    const name=NAMES.find(n=>n.toLowerCase()===m[1].toLowerCase()); if(!name) continue;
+    const ids=[...new Set(m[2].split(".").map(Number).filter(x=>byId[x]))].sort((a,b)=>a-b);
+    votes[name]={name, dates:ids, none:!ids.length}; c++;
+  }
+  document.getElementById("impOut").textContent = c ? `${c} eingelesen ✓` : "Keine #BZ-Codes gefunden.";
+  if(c) setTimeout(renderResults,500);
+}
+
+async function load(){
+  const st=document.getElementById("dbstate");
+  st.textContent="Lade …";
+  try{
+    const {votes:v, source}=await loadVotes();
+    votes=v; renderResults();
+    st.textContent=(source==="live"?"Live":"Über GitHub (kann bis zu 5 Min. verzögert sein)")+" · "+new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
+  }catch(e){
+    st.textContent="Stimmen konnten nicht geladen werden"; renderResults();
+  }
+}
+document.getElementById("reload").onclick=load;
+load();
+setInterval(load, 60000);
+</script>
+</body>
+</html>
