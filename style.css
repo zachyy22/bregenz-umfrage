@@ -113,7 +113,7 @@ h2{font-size:clamp(24px,5vw,34px)}
 :focus-visible{outline:2px solid var(--lake); outline-offset:3px}
 
 /* ---------- names ---------- */
-.names{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px}
+.names{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px}
 .name{
   position:relative; cursor:pointer; text-align:left; font:inherit; color:var(--fg);
   padding:16px 14px; border-radius:var(--r-md);
@@ -221,7 +221,7 @@ details[open] summary{margin-bottom:12px}
 .linkish{background:none;border:0;color:var(--faint);font:inherit;cursor:pointer;text-decoration:underline;padding:0}
 
 @media (max-width:620px){
-  .names{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .names{grid-template-columns:repeat(3,minmax(0,1fr))}
   .facts,.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
   .fact b,.kpi b{font-size:16px}
   .dates{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -321,6 +321,9 @@ details[open] summary{margin-bottom:12px}
   .kpi b{font-size:18px}
 }
 @media (max-width:360px){
-  .names,.dates{grid-template-columns:1fr 1fr; gap:8px}
+  .names{gap:8px}
+  .dates{grid-template-columns:1fr 1fr; gap:8px}
   .date .days{font-size:22px}
 }
+
+@media (max-width:620px){ .name{padding:12px 10px; min-height:104px} .name span{font-size:15px} .name .voted{top:6px; right:6px; font-size:9px} .name.bday .tag{font-size:10px} }

@@ -6,9 +6,9 @@ const WORKER_URL = "https://bregenz-umfrage.manuel-f16.workers.dev";
 const REPO = "zachyy22/bregenz-umfrage";
 /* ======================================= */
 
-const NAMES = ["Justin","Marlon","Navas","Marci","Ludde","David","Lucas","Dennis"];
+const NAMES = ["Justin","Marlon","Navas","Marci","Ludde","David","Lucas","Dennis","Ramon"];
 const BDAY = "Justin";
-const HUES = {Justin:["#f5c96a","#ff9f43"],Marlon:["#46d3ff","#8b5cff"],Navas:["#ff5fa8","#ff9f43"],Marci:["#62f2ae","#46d3ff"],Ludde:["#b48bff","#ff5fa8"],David:["#ffd36e","#62f2ae"],Lucas:["#7ad7ff","#62f2ae"],Dennis:["#ff8f6b","#ff5fa8"]};
+const HUES = {Justin:["#f5c96a","#ff9f43"],Marlon:["#46d3ff","#8b5cff"],Navas:["#ff5fa8","#ff9f43"],Marci:["#62f2ae","#46d3ff"],Ludde:["#b48bff","#ff5fa8"],David:["#ffd36e","#62f2ae"],Lucas:["#7ad7ff","#62f2ae"],Dennis:["#ff8f6b","#ff5fa8"],Ramon:["#c6ff6b","#46d3ff"]};
 const DATES = [
   {id:1, m:"Januar 2027",  days:"02–03", short:"02.–03.01.", wd:"Sa – So", hint:"Neujahrs-Wochenende", cls:"gold"},
   {id:2, m:"Januar 2027",  days:"09–10", short:"09.–10.01.", wd:"Sa – So"},
