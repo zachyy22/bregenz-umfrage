@@ -1,7 +1,7 @@
 /* ============ KONFIGURATION ============
    Nach dem Einrichten des Cloudflare Workers hier dessen URL eintragen
    (ohne Slash am Ende), z. B. "https://bregenz-vote.deinname.workers.dev" */
-const WORKER_URL = "bregenz-umfrage.manuel-f16.workers.dev";
+const WORKER_URL = "https://bregenz-umfrage.manuel-f16.workers.dev";
 
 const REPO = "zachyy22/bregenz-umfrage";
 /* ======================================= */
