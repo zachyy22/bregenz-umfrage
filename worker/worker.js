@@ -8,7 +8,7 @@
  *   ALLOWED_ORIGIN  (Text)    https://zachyy22.github.io
  */
 
-const NAMES = ["Justin","Marlon","Navas","Marci","Ludde","David","Lucas","Dennis"];
+const NAMES = ["Justin","Marlon","Navas","Marci","Ludde","David","Lucas","Dennis","Ramon"];
 const MAX_DATE_ID = 9;
 
 export default {
